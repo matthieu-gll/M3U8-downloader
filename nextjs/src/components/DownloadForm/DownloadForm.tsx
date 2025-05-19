@@ -15,14 +15,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 const formSchema = z.object({
-  url: z.string(),
-  title: z.string(),
+  url: z.string().min(1, "L'URL est requise"),
+  title: z.string().min(1, "Le titre est requis"),
 });
 
 export function DownloadForm() {
-  // 1. Define your form.
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -31,9 +31,11 @@ export function DownloadForm() {
     },
   });
 
-  // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { title, url } = values;
+
+    // ID unique pour ce toast
+    const toastId = toast.loading(`Téléchargement en cours : ${title}`);
 
     try {
       const response = await fetch("http://localhost:8055/m3u8", {
@@ -44,16 +46,27 @@ export function DownloadForm() {
         body: JSON.stringify({ title, url }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
+        throw new Error(data?.error || `Erreur ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log("Download started:", data);
-      // Afficher une notification, rediriger, etc.
-    } catch (error) {
-      console.error("Error during fetch:", error);
-      // Gérer les erreurs utilisateur ou UI ici
+      toast.success("Téléchargement terminé", {
+        id: toastId,
+        description: `Fichier: ${title} (ID: ${data.fileId})`,
+        action: {
+          label: "Voir",
+          onClick: () => {
+            window.open(`http://localhost:8055/admin/files/${data.fileId}`, "_blank");
+          },
+        },
+      });
+    } catch (error: any) {
+      toast.error("Échec du téléchargement", {
+        id: toastId,
+        description: error.message || "Erreur inconnue",
+      });
     }
   }
 
@@ -85,12 +98,12 @@ export function DownloadForm() {
               <FormControl>
                 <Input placeholder="fireforce-vostfr-s1-1" {...field} />
               </FormControl>
-              <FormDescription>File title in the directus</FormDescription>
+              <FormDescription>File title in Directus</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">Download</Button>
+        <Button type="submit">Télécharger</Button>
       </form>
     </Form>
   );
