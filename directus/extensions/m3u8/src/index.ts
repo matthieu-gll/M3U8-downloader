@@ -51,8 +51,8 @@ export default defineEndpoint((router, context) => {
 
       // Envoi du fichier dans Directus
       const fileId = await filesService.uploadOne(fileStream, {
-        filename_download: tmpFile.name,
-		title: title,
+        filename_download: title,
+        title: title,
         type: mimetype,
         storage: "local",
       });

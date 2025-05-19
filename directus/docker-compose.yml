@@ -15,3 +15,5 @@ services:
       DB_FILENAME: "/directus/database/data.db"
       WEBSOCKETS_ENABLED: "true"
       EXTENSIONS_AUTO_RELOAD: "true"
+      CORS_ENABLED: "true"
+      CORS_ORIGIN: "true"
